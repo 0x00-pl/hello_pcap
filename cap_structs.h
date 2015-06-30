@@ -31,11 +31,13 @@ typedef struct _pseudo_header
 
 #define PSEUDO_HEADER_LEN 12
 
-struct tcp_with_pseudo_header{
-    struct _pseudo_header pseudo;
+struct tcp_with_options_header{
     struct tcphdr header;
     u_char options[64];
 };
+
+#define IP_LEN(iphdr_) ((iphdr_).ihl * 4)
+#define TCP_LEN(tcphdr_) ((tcphdr_).doff * 4)
 
 struct cap_headers{
     struct ethhdr eth;
@@ -43,7 +45,7 @@ struct cap_headers{
     struct vlan_tag vlan1;
     struct pppoe_8863_8864 pppoe;
     struct ip_with_options ip;
-    struct tcp_with_pseudo_header tcp;
+    struct tcp_with_options_header tcp;
     u_char *payload;
     int payload_len;
 };

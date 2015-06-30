@@ -39,7 +39,7 @@ int decode_ip(u_char *packet, u_int paclen, struct ip_with_options *header){
     NTOHS(header->ip.check);
     return 0;
 }
-int decode_tcp(u_char *packet, u_int paclen, struct tcp_with_pseudo_header *header){
+int decode_tcp(u_char *packet, u_int paclen, struct tcp_with_options_header *header){
     struct tcphdr *tcp = (struct tcphdr*) packet;
     size_t size_tcp = tcp->doff * 4;
     bzero(header->options, 64);
@@ -95,13 +95,8 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
             decode_tcp(packet, paclen, &headers->tcp);
             size_tcp = headers->tcp.header.doff * 4;
             POP_HEADER(size_tcp);
-            headers->tcp.payload = packet;
-            headers->tcp.payload_len = paclen;
-            headers->tcp.pseudo.sourceIP = headers->ip.ip.saddr;
-            headers->tcp.pseudo.destIP = headers->ip.ip.daddr;
-            headers->tcp.pseudo.reserve = 0;
-            headers->tcp.pseudo.protocol = headers->ip.ip.protocol;
-            headers->tcp.pseudo.tcp_length = size_tcp + paclen;
+            headers->payload = packet;
+            headers->payload_len = paclen;
             break;
         default:
             sprintf(last_error, "[error][decode][ip]: unknow proto.\n");
