@@ -497,6 +497,8 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 		print_payload(payload, size_payload);
 	}
 
+	
+    //[debug]
     struct cap_headers cap_h;
     decode((u_char*)packet, header->caplen, &cap_h);
     u_char buff[4096]; u_int len;
