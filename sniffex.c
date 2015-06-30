@@ -433,60 +433,60 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 	printf("\nPacket number %d:\n", count);
 	count++;
 	
-	/* define ethernet header */
-	ethernet = (struct sniff_ethernet*)(packet);
-	
-	/* define/compute ip header offset */
-	ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
-	size_ip = IP_HL(ip)*4;
-	if (size_ip < 20) {
-		printf("   * Invalid IP header length: %u bytes\n", size_ip);
-		return;
-	}
-
-	/* print source and destination IP addresses */
-	printf("       From: %s\n", inet_ntoa(ip->ip_src));
-	printf("         To: %s\n", inet_ntoa(ip->ip_dst));
-	
-	/* determine protocol */	
-	switch(ip->ip_p) {
-		case IPPROTO_TCP:
-			printf("   Protocol: TCP\n");
-			break;
-		case IPPROTO_UDP:
-			printf("   Protocol: UDP\n");
-			return;
-		case IPPROTO_ICMP:
-			printf("   Protocol: ICMP\n");
-			return;
-		case IPPROTO_IP:
-			printf("   Protocol: IP\n");
-			return;
-		default:
-			printf("   Protocol: unknown\n");
-			return;
-	}
-	
-	/*
-	 *  OK, this packet is TCP.
-	 */
-	
-	/* define/compute tcp header offset */
-	tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
-	size_tcp = TH_OFF(tcp)*4;
-	if (size_tcp < 20) {
-		printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
-		return;
-	}
-	
-	printf("   Src port: %d\n", ntohs(tcp->th_sport));
-	printf("   Dst port: %d\n", ntohs(tcp->th_dport));
-	
-	/* define/compute tcp payload (segment) offset */
-	payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-	
-	/* compute tcp payload (segment) size */
-	size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+// // 	/* define ethernet header */
+// // 	ethernet = (struct sniff_ethernet*)(packet);
+// // 	
+// // 	/* define/compute ip header offset */
+// // 	ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
+// // 	size_ip = IP_HL(ip)*4;
+// // 	if (size_ip < 20) {
+// // 		printf("   * Invalid IP header length: %u bytes\n", size_ip);
+// // 		return;
+// // 	}
+// // 
+// // 	/* print source and destination IP addresses */
+// // 	printf("       From: %s\n", inet_ntoa(ip->ip_src));
+// // 	printf("         To: %s\n", inet_ntoa(ip->ip_dst));
+// // 	
+// // 	/* determine protocol */	
+// // 	switch(ip->ip_p) {
+// // 		case IPPROTO_TCP:
+// // 			printf("   Protocol: TCP\n");
+// // 			break;
+// // 		case IPPROTO_UDP:
+// // 			printf("   Protocol: UDP\n");
+// // // 			return;
+// // 		case IPPROTO_ICMP:
+// // 			printf("   Protocol: ICMP\n");
+// // // 			return;
+// // 		case IPPROTO_IP:
+// // 			printf("   Protocol: IP\n");
+// // // 			return;
+// // 		default:
+// // 			printf("   Protocol: unknown\n");
+// // // 			return;
+// // 	}
+// // 	
+// // 	/*
+// // 	 *  OK, this packet is TCP.
+// // 	 */
+// // 	
+// // 	/* define/compute tcp header offset */
+// // 	tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
+// // 	size_tcp = TH_OFF(tcp)*4;
+// // 	if (size_tcp < 20) {
+// // 		printf("   * Invalid TCP header length: %u bytes\n", size_tcp);
+// // 		return;
+// // 	}
+// // 	
+// // 	printf("   Src port: %d\n", ntohs(tcp->th_sport));
+// // 	printf("   Dst port: %d\n", ntohs(tcp->th_dport));
+// // 	
+// // 	/* define/compute tcp payload (segment) offset */
+// // 	payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
+// // 	
+// // 	/* compute tcp payload (segment) size */
+// // 	size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
 	
 	/*
 	 * Print payload data; it might be binary, so don't just
@@ -501,6 +501,17 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     //[debug]
     struct cap_headers cap_h;
     decode((u_char*)packet, header->caplen, &cap_h);
+    
+    /* print source and destination IP addresses */
+    printf("       From: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.ip.saddr));
+    printf("         To: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.ip.daddr));
+    if(cap_h.ip.ip.protocol != IPPROTO_TCP){
+      printf("   Protocol: Not TCP.\n");
+      return;
+    }
+    printf("   Src port: %d\n", cap_h.tcp.header.source);
+    printf("   Dst port: %d\n", cap_h.tcp.header.dest);
+    
     printf("[debug]   Payload (%d bytes):\n", cap_h.payload_len);
     print_payload(cap_h.payload, cap_h.payload_len);
     u_char buff[4096]; u_int len;
@@ -516,7 +527,7 @@ int main(int argc, char **argv)
 	char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
 	pcap_t *handle;				/* packet capture handle */
 
-	char filter_exp[] = "ip";		/* filter expression [3] */
+	char filter_exp[] = "tcp";		/* filter expression [3] */
 	struct bpf_program fp;			/* compiled filter program (expression) */
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
