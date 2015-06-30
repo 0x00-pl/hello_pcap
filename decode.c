@@ -96,7 +96,7 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
             size_tcp = headers->tcp.header.doff * 4;
             POP_HEADER(size_tcp);
             headers->payload = packet;
-            headers->payload_len = paclen;
+            headers->payload_len = headers->ip.ip.tot_len - (size_ip+size_tcp);
             break;
         default:
             sprintf(last_error, "[error][decode][ip]: unknow proto.\n");

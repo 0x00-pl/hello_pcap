@@ -492,15 +492,17 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 	 * Print payload data; it might be binary, so don't just
 	 * treat it as a string.
 	 */
-	if (size_payload > 0) {
-		printf("   Payload (%d bytes):\n", size_payload);
-		print_payload(payload, size_payload);
-	}
+// 	if (size_payload > 0) {
+// 		printf("   Payload (%d bytes):\n", size_payload);
+// 		print_payload(payload, size_payload);
+// 	}
 
 	
     //[debug]
     struct cap_headers cap_h;
     decode((u_char*)packet, header->caplen, &cap_h);
+    printf("[debug]   Payload (%d bytes):\n", cap_h.payload_len);
+    print_payload(cap_h.payload, cap_h.payload_len);
     u_char buff[4096]; u_int len;
     bzero(buff, 4096);
     encode(&cap_h, buff, &len);
