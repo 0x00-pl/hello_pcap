@@ -1,11 +1,100 @@
 #include "cap_structs.h"
 #include <string.h>
 #include <stdio.h>
+#include <arpa/inet.h>
 
 char last_error[256];
 const char *get_last_error(){
     return last_error;
 }
+
+#if 1
+#define IF_DEBUG(x) x
+#else
+#define IF_DEBUG(x)
+#endif
+
+void print_mac(u_char mac[ETH_ALEN]){
+    printf("%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+}
+void print_ethernet(struct ethhdr *header){
+    printf("(struct ethhdr){\n");
+    printf("    .h_dest = "); print_mac(header->h_dest); printf(",\n");
+    printf("    .h_source = "); print_mac(header->h_source); printf(",\n");
+    printf("    .h_proto = 0x%04x,\n", header->h_proto);
+    printf("};\n");
+}
+
+void print_vlan(struct vlan_tag *header){
+    printf("(struct vlan_tag){\n");
+    printf("    .vlan_tpid = 0x%04x,\n", header->vlan_tpid);
+    printf("    .vlan_tci = 0x%04x,\n", header->vlan_tci);
+    printf("};\n");
+}
+
+void print_pppoe_hdr(struct pppoe_hdr *header){
+    printf("(struct pppoe_hdr){\n");
+    printf("    .ver = %x,\n", header->ver);
+    printf("    .type = %x,\n", header->type);
+    printf("    .code = %x,\n", header->code);
+    printf("    .length = %d,\n", header->length);
+    printf("    .sid = 0x%04x,\n", header->sid);
+    printf("};\n");
+}
+
+void print_pppoe_8864(struct pppoe_8863_8864 *header){
+    print_pppoe_hdr(&header->header);
+    printf("ppp_prorocol = 0x%04x;\n", header->ppp_prorocol);
+}
+
+void print_iphdr(struct iphdr *header){
+    printf("(struct iphdr){\n");
+    printf("    .version = %x,\n", header->version);
+    printf("    .ihl = %x,\n", header->ihl);
+    printf("    .tos = %02x,\n", header->tos);
+    printf("    .tot_len = %d,\n", header->tot_len);
+    printf("    .id = 0x%04x,\n", header->id);
+    printf("    .frag_off = %04x,\n", header->frag_off);
+    printf("    .ttl = %d,\n", header->ttl);
+    printf("    .protocol = 0x%02x,\n", header->protocol);
+    printf("    .check = 0x%04x,\n", header->check);
+    printf("    .saddr = %s,\n", inet_ntoa(*(struct in_addr*)&header->saddr));
+    printf("    .daddr = %s,\n", inet_ntoa(*(struct in_addr*)&header->daddr));
+    printf("};\n");
+}
+
+void print_ip_with_options(struct ip_with_options *header){
+  print_iphdr(&header->header);
+  printf("options=...;\n");
+}
+
+void print_tcphdr(struct tcphdr *header){
+    printf("(struct tcphdr){\n");
+    printf("    .source = %d,\n", header->source);
+    printf("    .dest = %d,\n", header->dest);
+    printf("    .seq = 0x%08x,\n", header->seq);
+    printf("    .ack_seq = 0x%08x,\n", header->ack_seq);
+    printf("    .doff = %x,\n", header->doff);
+    printf("    .res1 = %x,\n", header->res1);
+    printf("    .cwr = %x,\n", header->cwr);
+    printf("    .ece = %x,\n", header->ece);
+    printf("    .urg = %x,\n", header->urg);
+    printf("    .ack = %x,\n", header->ack);
+    printf("    .psh = %x,\n", header->psh);
+    printf("    .rst = %x,\n", header->rst);
+    printf("    .syn = %x,\n", header->syn);
+    printf("    .fin = %x,\n", header->fin);
+    printf("    .window = 0x%04x,\n", header->window);
+    printf("    .check = 0x%04x,\n", header->check);
+    printf("    .urg_ptr = 0x%04x,\n", header->urg_ptr);
+    printf("};\n");
+}
+
+void print_tcp_with_options_header(struct tcp_with_options_header *header){
+  print_tcphdr(&header->header);
+  printf("options=...;\n");
+}
+
 
 #define NTOHL(x) x = ntohl(x)
 #define NTOHS(x) x = ntohs(x)
@@ -33,10 +122,10 @@ int decode_ip(u_char *packet, u_int paclen, struct ip_with_options *header){
     size_t size_ip = ip->ihl * 4;
     bzero(header->options, 64);
     memcpy(header, packet, size_ip);
-    NTOHS(header->ip.tot_len);
-    NTOHS(header->ip.id);
-    NTOHS(header->ip.frag_off);
-    NTOHS(header->ip.check);
+    NTOHS(header->header.tot_len);
+    NTOHS(header->header.id);
+    NTOHS(header->header.frag_off);
+    NTOHS(header->header.check);
     return 0;
 }
 int decode_tcp(u_char *packet, u_int paclen, struct tcp_with_options_header *header){
@@ -59,23 +148,27 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
     u_int16_t proto;
     decode_ethernet(packet, paclen, &headers->eth);
     POP_HEADER(ETH_HLEN);
+    IF_DEBUG(print_ethernet(&headers->eth));
     proto = headers->eth.h_proto;
     
     if(proto == ETH_P_8021Q){
         decode_vlan(packet, paclen, &headers->vlan);
         POP_HEADER(VLAN_TAG_LEN);
+        IF_DEBUG(print_vlan(&headers->vlan));
         proto = headers->vlan.vlan_tci;
     }
     
     if(proto == ETH_P_8021Q){
         decode_vlan(packet, paclen, &headers->vlan1);
         POP_HEADER(VLAN_TAG_LEN);
+        IF_DEBUG(print_vlan(&headers->vlan1));
         proto = headers->vlan1.vlan_tci;
     }
     
     if(proto == ETH_P_PPP_SES){
         decode_pppoe_8864(packet, paclen, &headers->pppoe);
         POP_HEADER(PPPOE_SES_HLEN);
+        IF_DEBUG(print_pppoe_8864(&headers->pppoe));
         proto = ETH_P_IP;
     }
     
@@ -86,21 +179,23 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
     }
     
     decode_ip(packet, paclen, &headers->ip);
-    size_t size_ip = headers->ip.ip.ihl * 4;
+    size_t size_ip = headers->ip.header.ihl * 4;
     POP_HEADER(size_ip);
+    IF_DEBUG(print_ip_with_options(&headers->ip));
     
     size_t size_tcp;
-    switch(headers->ip.ip.protocol){
-        case IPPROTO_TCP:
-            decode_tcp(packet, paclen, &headers->tcp);
-            size_tcp = headers->tcp.header.doff * 4;
-            POP_HEADER(size_tcp);
-            headers->payload = packet;
-            headers->payload_len = headers->ip.ip.tot_len - (size_ip+size_tcp);
-            break;
-        default:
-            sprintf(last_error, "[error][decode][ip]: unknow proto.\n");
-            return -1;
+    switch(headers->ip.header.protocol){
+    case IPPROTO_TCP:
+        decode_tcp(packet, paclen, &headers->tcp);
+        size_tcp = headers->tcp.header.doff * 4;
+        POP_HEADER(size_tcp);
+        IF_DEBUG(print_tcp_with_options_header(&headers->tcp));
+        headers->payload = packet;
+        headers->payload_len = headers->ip.header.tot_len - (size_ip+size_tcp);
+        break;
+    default:
+        sprintf(last_error, "[error][decode][ip]: unknow proto.\n");
+        return -1;
     }
     return 0;
 #undef POP_HEADER

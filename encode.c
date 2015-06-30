@@ -31,18 +31,18 @@ int encode_pppoe_8864(struct pppoe_8863_8864 *header, u_char *packet){
 }
 
 void ip_net_order(struct ip_with_options *header){
-    NTOHS(header->ip.tot_len);
-    NTOHS(header->ip.id);
-    NTOHS(header->ip.frag_off);
-    NTOHS(header->ip.check);
+    NTOHS(header->header.tot_len);
+    NTOHS(header->header.id);
+    NTOHS(header->header.frag_off);
+    NTOHS(header->header.check);
 }
 
 void ip_checksum(struct ip_with_options *header){
     int i;
     u_char *buff;
     u_int32_t check = 0;
-    size_t size_ip = IP_LEN(header->ip);
-    header->ip.check = 0;
+    size_t size_ip = IP_LEN(header->header);
+    header->header.check = 0;
     
     ip_net_order(header);
     buff = (u_char*)header;
@@ -54,11 +54,11 @@ void ip_checksum(struct ip_with_options *header){
     
     check = (check>>16) + (check&0xffff);
     check ^= 0xffff;
-    header->ip.check = check;
+    header->header.check = check;
 }
 
 int encode_ip(struct ip_with_options *header, u_char *packet){
-    size_t size_ip = IP_LEN(header->ip);
+    size_t size_ip = IP_LEN(header->header);
     ip_net_order(header);
     memcpy(packet, header, size_ip);
     ip_net_order(header);
@@ -158,16 +158,16 @@ int encode(struct cap_headers *headers, u_char *packet, u_int *paclen_ptr){
         return -1;
     }
     
-    size_t size_ip = IP_LEN(headers->ip.ip);
+    size_t size_ip = IP_LEN(headers->ip.header);
     size_t size_tcp = TCP_LEN(headers->tcp.header);
-    headers->ip.ip.tot_len = size_ip + size_tcp + headers->payload_len;
+    headers->ip.header.tot_len = size_ip + size_tcp + headers->payload_len;
     ip_checksum(&headers->ip);
     encode_ip(&headers->ip, packet);
     PUSH_HEADER(size_ip);
     
-    switch(headers->ip.ip.protocol){
+    switch(headers->ip.header.protocol){
         case IPPROTO_TCP:
-            tcp_checksum(&headers->tcp, headers->ip.ip.saddr, headers->ip.ip.daddr, headers->payload, headers->payload_len);
+            tcp_checksum(&headers->tcp, headers->ip.header.saddr, headers->ip.header.daddr, headers->payload, headers->payload_len);
             encode_tcp(&headers->tcp, packet);
             PUSH_HEADER(size_tcp);
 	    memcpy(packet, headers->payload, headers->payload_len);

@@ -16,7 +16,7 @@ struct pppoe_8863_8864{
 };
 
 struct ip_with_options{
-    struct iphdr ip;
+    struct iphdr header;
     u_char options[64];
 };
 

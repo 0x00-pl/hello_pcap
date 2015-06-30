@@ -304,10 +304,11 @@ void
 print_app_usage(void)
 {
 
-	printf("Usage: %s [interface]\n", APP_NAME);
+	printf("Usage: %s [interface filter]\n", APP_NAME);
 	printf("\n");
 	printf("Options:\n");
-	printf("    interface    Listen on <interface> for packets.\n");
+        printf("    interface    Listen on <interface> for packets.\n");
+        printf("    filter       <filter expression> for packets.\n");
 	printf("\n");
 
 return;
@@ -503,9 +504,9 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     decode((u_char*)packet, header->caplen, &cap_h);
     
     /* print source and destination IP addresses */
-    printf("       From: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.ip.saddr));
-    printf("         To: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.ip.daddr));
-    if(cap_h.ip.ip.protocol != IPPROTO_TCP){
+    printf("       From: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.header.saddr));
+    printf("         To: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.header.daddr));
+    if(cap_h.ip.header.protocol != IPPROTO_TCP){
       printf("   Protocol: Not TCP.\n");
       return;
     }
@@ -527,7 +528,7 @@ int main(int argc, char **argv)
 	char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
 	pcap_t *handle;				/* packet capture handle */
 
-	char filter_exp[] = "tcp";		/* filter expression [3] */
+	char *filter_exp = "tcp";		/* filter expression [3] */
 	struct bpf_program fp;			/* compiled filter program (expression) */
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
@@ -536,10 +537,11 @@ int main(int argc, char **argv)
 	print_app_banner();
 
 	/* check for capture device name on command-line */
-	if (argc == 2) {
-		dev = argv[1];
+	if (argc == 3) {
+                dev = argv[1];
+                filter_exp = argv[2];
 	}
-	else if (argc > 2) {
+	else if (argc > 3) {
 		fprintf(stderr, "error: unrecognized command-line options\n\n");
 		print_app_usage();
 		exit(EXIT_FAILURE);
