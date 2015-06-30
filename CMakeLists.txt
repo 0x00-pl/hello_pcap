@@ -3,7 +3,10 @@ project(hello_pcap)
 
 
 
-add_executable(hello_pcap sniffex.c)
+add_executable(hello_pcap
+sniffex.c
+# encode.c
+)
 
 install(TARGETS hello_pcap RUNTIME DESTINATION bin)
 

@@ -410,14 +410,14 @@ print_payload(const u_char *payload, int len)
 
 return;
 }
-
 /*
  * dissect/print packet
  */
+#include "encode.c"
 void
 got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
-
+    
 	static int count = 1;                   /* packet counter */
 	
 	/* declare pointers to packet headers */
@@ -497,6 +497,11 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 		print_payload(payload, size_payload);
 	}
 
+    struct cap_headers cap_h;
+    decode((u_char*)packet, header->caplen, &cap_h);
+    u_char buff[4096]; u_int len;
+    bzero(buff, 4096);
+    encode(&cap_h, buff, &len);
 return;
 }
 
