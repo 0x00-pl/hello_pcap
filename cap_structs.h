@@ -35,8 +35,6 @@ struct tcp_with_pseudo_header{
     struct _pseudo_header pseudo;
     struct tcphdr header;
     u_char options[64];
-    u_char *payload;
-    int payload_len;
 };
 
 struct cap_headers{
@@ -46,6 +44,8 @@ struct cap_headers{
     struct pppoe_8863_8864 pppoe;
     struct ip_with_options ip;
     struct tcp_with_pseudo_header tcp;
+    u_char *payload;
+    int payload_len;
 };
 
 
