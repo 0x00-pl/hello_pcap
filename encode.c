@@ -30,18 +30,15 @@ int encode_pppoe_8864(struct pppoe_8863_8864 *header, u_char *packet){
     return 0;
 }
 
-void ip_net_order(struct ip_with_options *header){
-    NTOHS(header->header.tot_len);
-    NTOHS(header->header.id);
-    NTOHS(header->header.frag_off);
-    NTOHS(header->header.check);
-}
-
 void ip_checksum(struct ip_with_options *header){
     int i;
     u_char *buff;
     u_int32_t check = 0;
     size_t size_ip = IP_LEN(header->header);
+    
+    IF_DEBUG(printf("++++ip checksum++++\n"));
+    IF_DEBUG(print_ip_with_options(header));
+    
     header->header.check = 0;
     
     ip_net_order(header);
@@ -55,6 +52,9 @@ void ip_checksum(struct ip_with_options *header){
     check = (check>>16) + (check&0xffff);
     check ^= 0xffff;
     header->header.check = check;
+    
+    IF_DEBUG(print_ip_with_options(header));
+    IF_DEBUG(printf("----ip checksum----\n"));
 }
 
 int encode_ip(struct ip_with_options *header, u_char *packet){
@@ -65,27 +65,21 @@ int encode_ip(struct ip_with_options *header, u_char *packet){
     return 0;
 }
 
-void tcp_net_order(struct tcp_with_options_header *header){
-    NTOHS(header->header.source);
-    NTOHS(header->header.dest);
-    NTOHL(header->header.seq);
-    NTOHL(header->header.ack_seq);
-    NTOHS(header->header.window);
-    NTOHS(header->header.check);
-    NTOHS(header->header.urg_ptr);
-}
-
 void tcp_checksum(struct tcp_with_options_header *header, u_int source_ip, u_int dest_ip, u_char *payload, u_int payload_len){
     int i;
     u_char *buff;
     u_int32_t check = 0;
-    u_int tcphdr_len = TCP_LEN(header->header)+payload_len;
+    u_int tcphdr_len = TCP_LEN(header->header);
+    
+    IF_DEBUG(printf("++++tcp checksum++++\n"));
+    IF_DEBUG(print_tcp_with_options(header));
+    
     header->header.check = 0;
     
     struct _pseudo_header psdh = {
       source_ip, dest_ip,
       0, IPPROTO_TCP,
-      tcphdr_len
+      tcphdr_len+payload_len
     };
     NTOHS(psdh.tcp_length);
     
@@ -116,6 +110,9 @@ void tcp_checksum(struct tcp_with_options_header *header, u_int source_ip, u_int
     check ^= 0xffff;
     
     header->header.check = check;
+    
+    IF_DEBUG(print_tcp_with_options(header));
+    IF_DEBUG(printf("----tcp checksum----\n"));
 }
 
 int encode_tcp(struct tcp_with_options_header *header, u_char *packet){

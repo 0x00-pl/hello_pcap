@@ -515,8 +515,8 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     
     printf("[debug]   Payload (%d bytes):\n", cap_h.payload_len);
     print_payload(cap_h.payload, cap_h.payload_len);
-    u_char buff[4096]; u_int len;
-    bzero(buff, 4096);
+    u_char buff[65536]; u_int len;
+    bzero(buff, 65536);
     encode(&cap_h, buff, &len);
 return;
 }

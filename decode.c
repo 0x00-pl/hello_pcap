@@ -37,8 +37,8 @@ void print_pppoe_hdr(struct pppoe_hdr *header){
     printf("    .ver = %x,\n", header->ver);
     printf("    .type = %x,\n", header->type);
     printf("    .code = %x,\n", header->code);
-    printf("    .length = %d,\n", header->length);
     printf("    .sid = 0x%04x,\n", header->sid);
+    printf("    .length = %d,\n", header->length);
     printf("};\n");
 }
 
@@ -90,7 +90,7 @@ void print_tcphdr(struct tcphdr *header){
     printf("};\n");
 }
 
-void print_tcp_with_options_header(struct tcp_with_options_header *header){
+void print_tcp_with_options(struct tcp_with_options_header *header){
   print_tcphdr(&header->header);
   printf("options=...;\n");
 }
@@ -98,6 +98,23 @@ void print_tcp_with_options_header(struct tcp_with_options_header *header){
 
 #define NTOHL(x) x = ntohl(x)
 #define NTOHS(x) x = ntohs(x)
+
+void ip_net_order(struct ip_with_options *header){
+    NTOHS(header->header.tot_len);
+    NTOHS(header->header.id);
+    NTOHS(header->header.frag_off);
+    NTOHS(header->header.check);
+}
+
+void tcp_net_order(struct tcp_with_options_header *header){
+    NTOHS(header->header.source);
+    NTOHS(header->header.dest);
+    NTOHL(header->header.seq);
+    NTOHL(header->header.ack_seq);
+    NTOHS(header->header.window);
+    NTOHS(header->header.check);
+    NTOHS(header->header.urg_ptr);
+}
 
 int decode_ethernet(u_char *packet, u_int paclen, struct ethhdr *header){
     memcpy(header, packet, ETH_HLEN);
@@ -122,10 +139,7 @@ int decode_ip(u_char *packet, u_int paclen, struct ip_with_options *header){
     size_t size_ip = ip->ihl * 4;
     bzero(header->options, 64);
     memcpy(header, packet, size_ip);
-    NTOHS(header->header.tot_len);
-    NTOHS(header->header.id);
-    NTOHS(header->header.frag_off);
-    NTOHS(header->header.check);
+    ip_net_order(header);
     return 0;
 }
 int decode_tcp(u_char *packet, u_int paclen, struct tcp_with_options_header *header){
@@ -133,13 +147,7 @@ int decode_tcp(u_char *packet, u_int paclen, struct tcp_with_options_header *hea
     size_t size_tcp = tcp->doff * 4;
     bzero(header->options, 64);
     memcpy(&header->header, packet, size_tcp);
-    NTOHS(header->header.source);
-    NTOHS(header->header.dest);
-    NTOHL(header->header.seq);
-    NTOHL(header->header.ack_seq);
-    NTOHS(header->header.window);
-    NTOHS(header->header.check);
-    NTOHS(header->header.urg_ptr);
+    tcp_net_order(header);
     return 0;
 }
 
@@ -189,7 +197,7 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
         decode_tcp(packet, paclen, &headers->tcp);
         size_tcp = headers->tcp.header.doff * 4;
         POP_HEADER(size_tcp);
-        IF_DEBUG(print_tcp_with_options_header(&headers->tcp));
+        IF_DEBUG(print_tcp_with_options(&headers->tcp));
         headers->payload = packet;
         headers->payload_len = headers->ip.header.tot_len - (size_ip+size_tcp);
         break;
