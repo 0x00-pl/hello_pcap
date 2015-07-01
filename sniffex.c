@@ -414,7 +414,7 @@ return;
 /*
  * dissect/print packet
  */
-#include "encode.c"
+#include "tcp_reply.c"
 void
 got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
@@ -422,16 +422,16 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 	static int count = 1;                   /* packet counter */
 	
 	/* declare pointers to packet headers */
-	const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
-	const struct sniff_ip *ip;              /* The IP header */
-	const struct sniff_tcp *tcp;            /* The TCP header */
-	const char *payload;                    /* Packet payload */
+// 	const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
+// 	const struct sniff_ip *ip;              /* The IP header */
+// 	const struct sniff_tcp *tcp;            /* The TCP header */
+// 	const char *payload;                    /* Packet payload */
 
-	int size_ip;
-	int size_tcp;
-	int size_payload;
+// 	int size_ip;
+// 	int size_tcp;
+// 	int size_payload;
 	
-	printf("\nPacket number %d:\n", count);
+	printf("\n###### Packet number %d ######\n", count);
 	count++;
 	
 // // 	/* define ethernet header */
@@ -518,6 +518,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     u_char buff[65536]; u_int len;
     bzero(buff, 65536);
     encode(&cap_h, buff, &len);
+    IF_DEBUG(printf("encode len %d/%d\n", len, header->caplen));
 return;
 }
 
@@ -528,7 +529,9 @@ int main(int argc, char **argv)
 	char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
 	pcap_t *handle;				/* packet capture handle */
 
-	char *filter_exp = "tcp";		/* filter expression [3] */
+	char *filter_exp =
+            "((ip[2:2]>80) and (tcp[13]&16!=0) and (tcp dst port 80)) or"
+            "(pppoes and ((ip[2:2]>80) and (tcp[13]&16!=0) and (tcp dst port 80)))";		/* filter expression [] */
 	struct bpf_program fp;			/* compiled filter program (expression) */
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
