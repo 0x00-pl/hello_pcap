@@ -36,8 +36,8 @@ void ip_checksum(struct ip_with_options *header){
     u_int32_t check = 0;
     size_t size_ip = IP_LEN(header->header);
     
-    IF_DEBUG(printf("++++ip checksum++++\n"));
-    IF_DEBUG(print_ip_with_options(header));
+//     IF_DEBUG(printf("++++ip checksum++++\n"));
+//     IF_DEBUG(print_ip_with_options(header));
     
     header->header.check = 0;
     
@@ -53,8 +53,8 @@ void ip_checksum(struct ip_with_options *header){
     check ^= 0xffff;
     header->header.check = check;
     
-    IF_DEBUG(print_ip_with_options(header));
-    IF_DEBUG(printf("----ip checksum----\n"));
+//     IF_DEBUG(print_ip_with_options(header));
+//     IF_DEBUG(printf("----ip checksum----\n"));
 }
 
 int encode_ip(struct ip_with_options *header, u_char *packet){
@@ -71,8 +71,8 @@ void tcp_checksum(struct tcp_with_options_header *header, u_int source_ip, u_int
     u_int32_t check = 0;
     u_int tcphdr_len = TCP_LEN(header->header);
     
-    IF_DEBUG(printf("++++tcp checksum++++\n"));
-    IF_DEBUG(print_tcp_with_options(header));
+//     IF_DEBUG(printf("++++tcp checksum++++\n"));
+//     IF_DEBUG(print_tcp_with_options(header));
     
     header->header.check = 0;
     
@@ -111,8 +111,8 @@ void tcp_checksum(struct tcp_with_options_header *header, u_int source_ip, u_int
     
     header->header.check = check;
     
-    IF_DEBUG(print_tcp_with_options(header));
-    IF_DEBUG(printf("----tcp checksum----\n"));
+//     IF_DEBUG(print_tcp_with_options(header));
+//     IF_DEBUG(printf("----tcp checksum----\n"));
 }
 
 int encode_tcp(struct tcp_with_options_header *header, u_char *packet){
