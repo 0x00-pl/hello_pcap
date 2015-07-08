@@ -414,11 +414,13 @@ return;
 /*
  * dissect/print packet
  */
-#include "tcp_reply.c"
+#include "encode.h"
+#include "decode.h"
+#include "debug.h"
 void
 got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
-    
+    (void)args;
 	static int count = 1;                   /* packet counter */
 	
 	/* declare pointers to packet headers */

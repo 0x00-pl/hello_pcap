@@ -2,7 +2,7 @@
 
 
 
-int tcp_reply_payload(struct cap_headers* source, struct cap_headers *dest, u_char *payload, u_int payload_len){
+int tcp_response_payload(struct cap_headers* source, struct cap_headers *dest, u_char *payload, u_int payload_len){
     *dest = *source;
     
     //payload

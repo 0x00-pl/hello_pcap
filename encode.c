@@ -1,4 +1,7 @@
-#include "decode.c"
+#include "encode.h"
+#include "debug.h"
+#include <memory.h>
+#include <stdio.h>
 
 
 #define NTOHL(x) x = ntohl(x)
@@ -31,7 +34,7 @@ int encode_pppoe_8864(struct pppoe_8863_8864 *header, u_char *packet){
 }
 
 void ip_checksum(struct ip_with_options *header){
-    int i;
+    size_t i;
     u_char *buff;
     u_int32_t check = 0;
     size_t size_ip = IP_LEN(header->header);
@@ -66,7 +69,7 @@ int encode_ip(struct ip_with_options *header, u_char *packet){
 }
 
 void tcp_checksum(struct tcp_with_options_header *header, u_int source_ip, u_int dest_ip, u_char *payload, u_int payload_len){
-    int i;
+    size_t i;
     u_char *buff;
     u_int32_t check = 0;
     u_int tcphdr_len = TCP_LEN(header->header);

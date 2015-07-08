@@ -1,23 +1,15 @@
-#include "cap_structs.h"
+#include "decode.h"
+#include "debug.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <arpa/inet.h>
 
-char last_error[256];
-const char *get_last_error(){
-    return last_error;
-}
-
-#if 1
-#define IF_DEBUG(x) x
-#else
-#define IF_DEBUG(x)
-#endif
-
-void print_mac(u_char mac[ETH_ALEN]){
+static void print_mac(u_char mac[ETH_ALEN]){
     printf("%02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 }
-void print_ethernet(struct ethhdr *header){
+
+static void print_ethernet(struct ethhdr *header){
     printf("(struct ethhdr){\n");
     printf("    .h_dest = "); print_mac(header->h_dest); printf(",\n");
     printf("    .h_source = "); print_mac(header->h_source); printf(",\n");
@@ -25,14 +17,14 @@ void print_ethernet(struct ethhdr *header){
     printf("};\n");
 }
 
-void print_vlan(struct vlan_tag *header){
+static void print_vlan(struct vlan_tag *header){
     printf("(struct vlan_tag){\n");
     printf("    .vlan_tpid = 0x%04x,\n", header->vlan_tpid);
     printf("    .vlan_tci = 0x%04x,\n", header->vlan_tci);
     printf("};\n");
 }
 
-void print_pppoe_hdr(struct pppoe_hdr *header){
+static void print_pppoe_hdr(struct pppoe_hdr *header){
     printf("(struct pppoe_hdr){\n");
     printf("    .ver = %x,\n", header->ver);
     printf("    .type = %x,\n", header->type);
@@ -42,12 +34,12 @@ void print_pppoe_hdr(struct pppoe_hdr *header){
     printf("};\n");
 }
 
-void print_pppoe_8864(struct pppoe_8863_8864 *header){
+static void print_pppoe_8864(struct pppoe_8863_8864 *header){
     print_pppoe_hdr(&header->header);
     printf("ppp_prorocol = 0x%04x;\n", header->ppp_prorocol);
 }
 
-void print_iphdr(struct iphdr *header){
+static void print_iphdr(struct iphdr *header){
     printf("(struct iphdr){\n");
     printf("    .version = %x,\n", header->version);
     printf("    .ihl = %x,\n", header->ihl);
@@ -63,12 +55,12 @@ void print_iphdr(struct iphdr *header){
     printf("};\n");
 }
 
-void print_ip_with_options(struct ip_with_options *header){
+static void print_ip_with_options(struct ip_with_options *header){
   print_iphdr(&header->header);
   printf("options=...;\n");
 }
 
-void print_tcphdr(struct tcphdr *header){
+static void print_tcphdr(struct tcphdr *header){
     printf("(struct tcphdr){\n");
     printf("    .source = %d,\n", header->source);
     printf("    .dest = %d,\n", header->dest);
@@ -90,7 +82,7 @@ void print_tcphdr(struct tcphdr *header){
     printf("};\n");
 }
 
-void print_tcp_with_options(struct tcp_with_options_header *header){
+static void print_tcp_with_options(struct tcp_with_options_header *header){
   print_tcphdr(&header->header);
   printf("options=...;\n");
 }
