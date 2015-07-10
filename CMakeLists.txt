@@ -13,7 +13,7 @@ external/lib/rbtree.c
 add_executable(hello_pcap
 payload_cache.c
 sniffex.c
-tcp_hander.c
+# tcp_hander.c
 encode.c
 decode.c
 ${external_src}

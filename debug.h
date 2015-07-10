@@ -8,7 +8,7 @@ static inline const char *get_last_error(){
     return last_error;
 }
 
-#if 1
+#if 0
 #define IF_DEBUG(x) x
 #else
 #define IF_DEBUG(x)

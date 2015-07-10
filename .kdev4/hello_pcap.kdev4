@@ -25,7 +25,7 @@ Path=gcc
 Type=GCC
 
 [Launch]
-Launch Configurations=Launch Configuration 0
+Launch Configurations=Launch Configuration 0,Launch Configuration 1
 
 [Launch][Launch Configuration 0]
 Configured Launch Modes=execute
@@ -43,6 +43,18 @@ External Terminal=konsole --noclose --workdir %workdir -e %exe
 Project Target=hello_pcap,hello_pcap
 Use External Terminal=false
 Working Directory=
+isExecutable=false
+
+[Launch][Launch Configuration 1]
+Configured Launch Modes=debug
+Configured Launchers=gdb
+Name=hello_pcap
+Type=Native Application
+
+[Launch][Launch Configuration 1][Data]
+Configured from ProjectItem=hello_pcap,hello_pcap
+Project Target=hello_pcap,hello_pcap
+Working Directory=file:///home/pl/Documents/pcap/hello_pcap/build/
 isExecutable=false
 
 [Project]

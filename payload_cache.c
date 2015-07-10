@@ -1,7 +1,6 @@
 #include "payload_cache.h"
-
 #include "global_defines.h"
-
+#include <memory.h>
         
 
 
@@ -12,7 +11,8 @@ void id_payload_map_item_init(id_payload_map_item_t *obj,
     obj->source_port = source_port;
     obj->dest_ip = dest_ip;
     obj->tcp_seq = tcp_seq;
-    obj->payload = payload;
+    obj->payload = malloc(payload_len+1);
+    memcpy(obj->payload, payload, payload_len);
     obj->payload_len = payload_len;
 }
 

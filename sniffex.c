@@ -417,6 +417,15 @@ return;
 #include "encode.h"
 #include "decode.h"
 #include "debug.h"
+#include "tcp_hander.c"
+
+payload_cache_t g_cache;
+
+void tcp_callback_print_payload(void* args, u_char *tcp_payload, int length, void* extra){
+    printf("[debug]   Payload (%d bytes):\n %s\n\n", length, tcp_payload);
+//     print_payload(tcp_payload, length);
+}
+
 void
 got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
@@ -501,7 +510,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 // 	}
 
 	
-    //[debug]
+    // decode
     struct cap_headers cap_h;
     decode((u_char*)packet, header->caplen, &cap_h);
     
@@ -515,8 +524,13 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
     printf("   Src port: %d\n", cap_h.tcp.header.source);
     printf("   Dst port: %d\n", cap_h.tcp.header.dest);
     
-    printf("[debug]   Payload (%d bytes):\n", cap_h.payload_len);
-    print_payload(cap_h.payload, cap_h.payload_len);
+//     printf("[debug]   Payload2 (%d bytes):\n", cap_h.payload_len);
+//     print_payload(cap_h.payload, cap_h.payload_len);
+    
+    // callback
+    tcp_handler(&cap_h, &g_cache, tcp_callback_print_payload, NULL);
+    
+    // encode
     u_char buff[65536]; u_int len;
     bzero(buff, 65536);
     encode(&cap_h, buff, &len);

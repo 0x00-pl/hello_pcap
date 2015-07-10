@@ -14,15 +14,21 @@ void link_buff(u_char *dest, struct cap_headers *cur_headers, id_payload_map_ite
     }
 }
 
-typedef void tcp_callback_t(void* args, u_char *tcp_payload, u_char length, void* extra);
+typedef void tcp_callback_t(void* args, u_char *tcp_payload, int length, void* extra);
+
+int avlible_header_check(u_char *payload, int length){
+    if(length<4){return 0;}
+    return (strcmp(payload, "GET")==0) || (strcmp(payload, "POST")==0);
+}
 
 void tcp_handler(struct cap_headers *headers, payload_cache_t *payload_cache, tcp_callback_t callback, void* args){
     if(headers == NULL){return;}
-    if(headers->tcp.header.psh != 0){return;}
+//     if(headers->tcp.header.psh != 0){return;}
     if(headers->tcp.header.ack == 0){return;}
     u_int32_t src_ip = headers->ip.header.saddr;
     u_int16_t src_port = headers->tcp.header.source;
     u_int16_t dst_ip = headers->ip.header.saddr;
+    
     
     id_payload_map_item_t *cached_payload_item = payload_cache_find(payload_cache, src_ip, src_port, dst_ip);
     if(cached_payload_item == NULL){
