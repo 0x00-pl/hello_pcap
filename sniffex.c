@@ -572,7 +572,7 @@ int main(int argc, char **argv)
                 filter_exp = argv[2];
                 num_packets = atoi(argv[3]);
 	}
-	else if(argc == 0){
+	else if(argc == 1){
                 /* find a capture device if not specified on command-line */
                 dev = pcap_lookupdev(errbuf);
                 if (dev == NULL) {
