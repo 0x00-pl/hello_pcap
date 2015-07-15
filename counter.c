@@ -14,6 +14,9 @@ void print_counter(counter_t *counter){
     PRINT_COUNTER_MEMBER(tcp_port_80_package);
     PRINT_COUNTER_MEMBER(tcp_link_package_foward);
     PRINT_COUNTER_MEMBER(tcp_link_package_backward);
+    PRINT_COUNTER_MEMBER(http_bad_header);
+    PRINT_COUNTER_MEMBER(http_full_header);
+    PRINT_COUNTER_MEMBER(http_linked_header);
     PRINT_COUNTER_MEMBER(http_request);
     PRINT_COUNTER_MEMBER(cache_find);
     PRINT_COUNTER_MEMBER(cache_update);

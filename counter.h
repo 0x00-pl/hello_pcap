@@ -10,6 +10,9 @@ typedef struct counter_decl{
     u_int64_t tcp_port_80_package;
     u_int64_t tcp_link_package_foward;
     u_int64_t tcp_link_package_backward;
+    u_int64_t http_bad_header;
+    u_int64_t http_full_header;
+    u_int64_t http_linked_header;
     u_int64_t http_request;
     u_int64_t cache_find;
     u_int64_t cache_update;

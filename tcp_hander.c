@@ -49,6 +49,7 @@ void tcp_handler(struct cap_headers *headers, payload_cache_t *payload_cache, tc
     
     switch(avlible_header_check(headers->payload, headers->payload_len)){
         case HEADER_PART_BAD:
+            COUNTER_INC(http_bad_header);
             // ignore
             break;
         case HEADER_PART_BEG:
@@ -76,6 +77,7 @@ void tcp_handler(struct cap_headers *headers, payload_cache_t *payload_cache, tc
                     u_char buff[4096];
                     link_buff(buff, headers, cached_payload_item);
                     if(avlible_header_check(buff, linked_payload_len) == HEADER_PART_FULL){
+                        COUNTER_INC(http_linked_header);
                         callback(args, buff, linked_payload_len, NULL);
                         if_remove_cache = 1;
                     }
@@ -84,6 +86,7 @@ void tcp_handler(struct cap_headers *headers, payload_cache_t *payload_cache, tc
                     u_char *buff = malloc(linked_payload_len);
                     link_buff(buff, headers, cached_payload_item);
                     if(avlible_header_check(buff, linked_payload_len) == HEADER_PART_FULL){
+                        COUNTER_INC(http_linked_header);
                         callback(args, buff, linked_payload_len, NULL);
                         if_remove_cache = 1;
                     }
@@ -100,6 +103,7 @@ void tcp_handler(struct cap_headers *headers, payload_cache_t *payload_cache, tc
             }break;
             
         case HEADER_PART_FULL:
+            COUNTER_INC(http_full_header);
             callback(args, headers->payload, headers->payload_len, NULL);
             break;
     }
