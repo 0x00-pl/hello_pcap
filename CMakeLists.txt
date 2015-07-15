@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.6)
 project(hello_pcap)
 
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -lpcap")
 
 
 # set(CMAKE_INCLUDE_PATH "$(CMAKE_INCLUDE_PATH);external/include/")
@@ -20,4 +20,4 @@ counter.c
 ${external_src}
 )
 
-target_link_libraries(hello_pcap libpcap.a)
+target_link_libraries(hello_pcap) # libpcap.a)

@@ -549,7 +549,7 @@ return;
 
 int main(int argc, char **argv)
 {
-
+    printf("argc %d\n", argc);
 	char *dev = NULL;			/* capture device name */
 	char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
 	pcap_t *handle;				/* packet capture handle */
@@ -566,13 +566,9 @@ int main(int argc, char **argv)
 
 	print_app_banner();
 
+        
 	/* check for capture device name on command-line */
-	if (argc == 4) {
-                dev = argv[1];
-                filter_exp = argv[2];
-                num_packets = atoi(argv[3]);
-	}
-	else if(argc == 1){
+	if(argc == 1){
                 /* find a capture device if not specified on command-line */
                 dev = pcap_lookupdev(errbuf);
                 if (dev == NULL) {
@@ -580,6 +576,11 @@ int main(int argc, char **argv)
                             errbuf);
                         exit(EXIT_FAILURE);
                 }
+        }
+        else if(argc == 4) {
+                dev = argv[1];
+                filter_exp = argv[2];
+                num_packets = atoi(argv[3]);
         }
 	else{
 		fprintf(stderr, "error: unrecognized command-line options\n\n");
