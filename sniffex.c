@@ -304,11 +304,12 @@ void
 print_app_usage(void)
 {
 
-	printf("Usage: %s [interface filter]\n", APP_NAME);
+	printf("Usage: %s [interface filter num_packets]\n", APP_NAME);
 	printf("\n");
 	printf("Options:\n");
         printf("    interface    Listen on <interface> for packets.\n");
         printf("    filter       <filter expression> for packets.\n");
+        printf("    num_packets  Capture <num_packets> packets.\n");
 	printf("\n");
 
 return;
@@ -417,11 +418,13 @@ return;
 #include "encode.h"
 #include "decode.h"
 #include "debug.h"
+#include "counter.h"
 #include "tcp_hander.c"
 
 payload_cache_t g_cache;
 
 void tcp_callback_print_payload(void* args, u_char *tcp_payload, int length, void* extra){
+    COUNTER_INC(http_request);
     printf("[debug]   Payload (%d bytes):\n %s\n\n", length, tcp_payload);
 //     print_payload(tcp_payload, length);
 }
@@ -431,6 +434,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 {
     (void)args;
 	static int count = 1;                   /* packet counter */
+	COUNTER_INC(package);
 	
 	/* declare pointers to packet headers */
 // 	const struct sniff_ethernet *ethernet;  /* The ethernet header [1] */
@@ -442,7 +446,7 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 // 	int size_tcp;
 // 	int size_payload;
 	
-	printf("\n###### Packet number %d ######\n", count);
+	printf("###### Packet number %d ######\n", count);
 	count++;
 	
 // // 	/* define ethernet header */
@@ -512,20 +516,25 @@ got_packet(u_char *args, const struct pcap_pkthdr *header, const u_char *packet)
 	
     // decode
     struct cap_headers cap_h;
-    decode((u_char*)packet, header->caplen, &cap_h);
+    if(decode((u_char*)packet, header->caplen, &cap_h) == -1){
+        return;
+    }
     
     /* print source and destination IP addresses */
-    printf("       From: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.header.saddr));
-    printf("         To: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.header.daddr));
+    IF_DEBUG(printf("       From: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.header.saddr)));
+    IF_DEBUG(printf("         To: %s\n", inet_ntoa(*(struct in_addr*)&cap_h.ip.header.daddr)));
     if(cap_h.ip.header.protocol != IPPROTO_TCP){
-      printf("   Protocol: Not TCP.\n");
+      IF_DEBUG(printf("   Protocol: Not TCP.\n"));
       return;
     }
-    printf("   Src port: %d\n", cap_h.tcp.header.source);
-    printf("   Dst port: %d\n", cap_h.tcp.header.dest);
+    IF_DEBUG(printf("   Src port: %d\n", cap_h.tcp.header.source));
+    IF_DEBUG(printf("   Dst port: %d\n", cap_h.tcp.header.dest));
     
 //     printf("[debug]   Payload2 (%d bytes):\n", cap_h.payload_len);
 //     print_payload(cap_h.payload, cap_h.payload_len);
+    if(cap_h.tcp.header.source==80 || cap_h.tcp.header.dest==80){
+        COUNTER_INC(tcp_port_80_package);
+    }
     
     // callback
     tcp_handler(&cap_h, &g_cache, tcp_callback_print_payload, NULL);
@@ -545,35 +554,39 @@ int main(int argc, char **argv)
 	char errbuf[PCAP_ERRBUF_SIZE];		/* error buffer */
 	pcap_t *handle;				/* packet capture handle */
 
-	char *filter_exp =
-            "((ip[2:2]>80) and (tcp[13]&16!=0) and (tcp dst port 80)) or"
-            "(pppoes and ((ip[2:2]>80) and (tcp[13]&16!=0) and (tcp dst port 80)))";		/* filter expression [] */
+// 	char *filter_exp =
+//             "((ip[2:2]>80) and (tcp[13]&16!=0) and (tcp dst port 80)) or"
+//             "(pppoes and ((ip[2:2]>80) and (tcp[13]&16!=0) and (tcp dst port 80)))";		/* filter expression [] */
+        char *filter_exp = "ip and tcp dst port 80 and (ip[2:2]>80)";
+        
 	struct bpf_program fp;			/* compiled filter program (expression) */
 	bpf_u_int32 mask;			/* subnet mask */
 	bpf_u_int32 net;			/* ip */
-	int num_packets = 10;			/* number of packets to capture */
+	int num_packets = 100;			/* number of packets to capture */
 
 	print_app_banner();
 
 	/* check for capture device name on command-line */
-	if (argc == 3) {
+	if (argc == 4) {
                 dev = argv[1];
                 filter_exp = argv[2];
+                num_packets = atoi(argv[3]);
 	}
-	else if (argc > 3) {
+	else if(argc == 0){
+                /* find a capture device if not specified on command-line */
+                dev = pcap_lookupdev(errbuf);
+                if (dev == NULL) {
+                        fprintf(stderr, "Couldn't find default device: %s\n",
+                            errbuf);
+                        exit(EXIT_FAILURE);
+                }
+        }
+	else{
 		fprintf(stderr, "error: unrecognized command-line options\n\n");
 		print_app_usage();
 		exit(EXIT_FAILURE);
 	}
-	else {
-		/* find a capture device if not specified on command-line */
-		dev = pcap_lookupdev(errbuf);
-		if (dev == NULL) {
-			fprintf(stderr, "Couldn't find default device: %s\n",
-			    errbuf);
-			exit(EXIT_FAILURE);
-		}
-	}
+	
 	
 	/* get network number and mask associated with capture device */
 	if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1) {
@@ -623,6 +636,7 @@ int main(int argc, char **argv)
 	pcap_close(handle);
 
 	printf("\nCapture complete.\n");
+        print_counter(&g_counter);
 
 return 0;
 }

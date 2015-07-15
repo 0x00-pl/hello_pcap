@@ -1,5 +1,6 @@
 #include "decode.h"
 #include "debug.h"
+#include "counter.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -177,6 +178,7 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
         sprintf(last_error, "[error][decode]: unknow proto.\n");
         return -1;
     }
+    COUNTER_INC(ip_package);
     
     decode_ip(packet, paclen, &headers->ip);
     size_t size_ip = headers->ip.header.ihl * 4;
@@ -186,6 +188,7 @@ int decode(u_char *packet, u_int paclen, struct cap_headers *headers){
     size_t size_tcp;
     switch(headers->ip.header.protocol){
     case IPPROTO_TCP:
+        COUNTER_INC(tcp_package);
         decode_tcp(packet, paclen, &headers->tcp);
         size_tcp = headers->tcp.header.doff * 4;
         POP_HEADER(size_tcp);

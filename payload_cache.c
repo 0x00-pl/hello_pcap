@@ -1,5 +1,6 @@
 #include "payload_cache.h"
 #include "global_defines.h"
+#include "counter.h"
 #include <memory.h>
         
 
@@ -24,6 +25,7 @@ id_payload_map_item_t *id_payload_map_item_new(payload_cache_t *payload_cache){
 
 void id_payload_map_item_fini(id_payload_map_item_t *obj){
     free(obj->payload);
+    obj->payload_len = 0;
 }
 
 int id_payload_map_item_key_cmp(u_int32_t a_source_ip, u_int32_t b_source_ip,
@@ -66,6 +68,7 @@ void payload_cache_map_gc(payload_cache_t *payload_cache){
     if(payload_cache->map_size < CACHE_ITEM_SIZE*2){
         return;
     }
+    COUNTER_INC(cache_gc);
     
     struct rb_node *cur_node;
     id_payload_map_item_t *cur_item;
@@ -80,6 +83,7 @@ void payload_cache_map_gc(payload_cache_t *payload_cache){
 }
 
 id_payload_map_item_t *payload_cache_find(payload_cache_t *payload_cache, u_int32_t source_ip, u_int16_t source_port, u_int32_t dest_ip){
+    COUNTER_INC(cache_find);
     struct rb_node *node = payload_cache->id_payload_map.rb_node;
 
     while (node) {
@@ -104,6 +108,7 @@ id_payload_map_item_t *payload_cache_find(payload_cache_t *payload_cache, u_int3
 }
 
 void payload_cache_update(payload_cache_t *payload_cache, id_payload_map_item_t *data){
+    COUNTER_INC(cache_update);
     payload_cache_map_gc(payload_cache);
     struct rb_root *root = &payload_cache->id_payload_map;
     struct rb_node **new_node = &(root->rb_node);

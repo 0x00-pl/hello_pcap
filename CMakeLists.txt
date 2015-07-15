@@ -16,6 +16,7 @@ sniffex.c
 # tcp_hander.c
 encode.c
 decode.c
+counter.c
 ${external_src}
 )
 
