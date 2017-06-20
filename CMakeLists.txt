@@ -20,4 +20,15 @@ counter.c
 ${external_src}
 )
 
+add_library(capturepcap
+payload_cache.c
+encode.c
+decode.c
+counter.c
+tcp_hander.c
+http_header_parser.c
+${external_src}
+)
+
+
 target_link_libraries(hello_pcap) # libpcap.a)
